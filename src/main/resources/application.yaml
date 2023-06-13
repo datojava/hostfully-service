@@ -1,0 +1,21 @@
+logging:
+  config: classpath:log4j2.yaml
+  level:
+    com.netflix.discovery.shared.resolver.aws.ConfigClusterResolver: WARN
+    org.springframework.data.convert.CustomConversions: ERROR
+
+server:
+  port: 3001
+spring:
+  application:
+    name: account-service
+  jpa:
+    open-in-view: false
+    properties:
+      jakarta:
+        persistence:
+          sharedCache:
+            mode: UNSPECIFIED
+      hibernate:
+        show_sql: true
+        format_sql: true

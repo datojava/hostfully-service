@@ -1,0 +1,37 @@
+#Default configuration
+Configutation:
+name: Default
+status: INFO
+
+Properties:
+  Property:
+    name: log-path
+    value: "../logs"
+
+Appenders:
+
+  Console:
+    name: Console_Appender
+    target: SYSTEM_OUT
+    PatternLayout:
+      pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c %X{request-tracking-uuid} - %msg%n"
+
+  RollingFile:
+    - name: RollingFile_Appender
+      fileName: ${log-path}/hostfully-webservice.log
+      filePattern: "${log-path}/archive/hostfully-webservice.log.%d{yyyy-MM-dd}.gz"
+      PatternLayout:
+        pattern: "[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c - %msg%n"
+      Policies:
+        TimeBasedTriggeringPolicy:
+          interval: 1
+      DefaultRollOverStrategy:
+        max: 30
+
+Loggers:
+
+  Root:
+    level: info
+    AppenderRef:
+      - ref: Console_Appender
+      - ref: RollingFile_Appender
