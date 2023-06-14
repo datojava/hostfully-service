@@ -19,12 +19,6 @@ public class PropertyOwnerController {
     }
 
     @Monitor
-    @PostMapping("property-owner/create")
-    public HostfullyResponse createOwner(@RequestBody PropertyOwnerInfo ownerInfo) throws Exception {
-        return propertyService.createOwner(ownerInfo);
-    }
-
-    @Monitor
     @GetMapping("property-owner/list-owners")
     public PropertyOwnerResponse listOwners(@RequestParam("email") String email) throws Exception {
         return propertyService.listOwners(email);

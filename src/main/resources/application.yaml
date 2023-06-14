@@ -17,6 +17,7 @@ spring:
     password: hostfully
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
     open-in-view: false
     properties:
       jakarta:

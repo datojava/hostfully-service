@@ -22,12 +22,6 @@ public class PropertyController {
     }
 
     @Monitor
-    @PostMapping("property/create")
-    public HostfullyResponse createProperty(@RequestBody PropertyInfo propertyInfo) throws Exception {
-        return propertyService.createProperty(propertyInfo);
-    }
-
-    @Monitor
     @GetMapping("property/list-properties")
     public PropertyResponse listProperties() throws Exception {
         return propertyService.listProperties();
