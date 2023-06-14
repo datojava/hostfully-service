@@ -7,7 +7,16 @@ server:
 spring:
   application:
     name: hostfully-service
+  h2:
+    console:
+      enabled: true
+  datasource:
+    url: jdbc:h2:mem:hostfully
+    driverClassName: org.h2.Driver
+    username: hostfully
+    password: hostfully
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     open-in-view: false
     properties:
       jakarta:

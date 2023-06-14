@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CoreService {
+public class BookingService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
