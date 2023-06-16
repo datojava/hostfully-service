@@ -1,12 +1,12 @@
 package com.hostfully.webservice.controllers;
 
 import com.hostfully.webservice.annotations.Monitor;
-import com.hostfully.webservice.models.HostfullyResponse;
-import com.hostfully.webservice.models.properties.PropertyOwnerInfo;
 import com.hostfully.webservice.models.properties.PropertyOwnerResponse;
 import com.hostfully.webservice.services.PropertyService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PropertyOwnerController {

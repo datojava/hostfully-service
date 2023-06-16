@@ -14,7 +14,11 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
 public class CommonUtils {
 
@@ -63,6 +67,12 @@ public class CommonUtils {
     public static float round(float val) {
 
         return Float.parseFloat(HostfullyConstants.DEFAULT_NUMBER_FORMAT.format(val));
+    }
+
+
+
+    public static LocalDate toDate(String date) {
+        return LocalDate.parse(date, HostfullyConstants.DEFAULT_DATE_FORMAT);
     }
 
     public static ExecutionMetaInfo handleRequestExecutionInfo(LocalDateTime requestStartedAt) {

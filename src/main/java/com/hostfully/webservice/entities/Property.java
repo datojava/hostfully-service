@@ -11,11 +11,31 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @ManyToOne
+    @JoinColumn(name = "owner_id", nullable = false)
+    private PropertyOwner propertyOwner;
+
     @Column(name = "name")
     private String name;
 
     @Column(name = "address")
     private String address;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public PropertyOwner getPropertyOwner() {
+        return propertyOwner;
+    }
+
+    public void setPropertyOwner(PropertyOwner propertyOwner) {
+        this.propertyOwner = propertyOwner;
+    }
 
     public String getName() {
         return name;

@@ -9,7 +9,15 @@ public enum ErrorType {
 
     UNKNOWN_ERROR(999, "com.hostfully.webservice.unknown.error"),
     GENERAL_ERROR(1000, "com.hostfully.webservice.general.error"),
-    PARAMETER_MANDATORY_ERROR(1001, "com.hostfully.webservice.param.mandatory.error");
+    PARAMETER_MANDATORY_ERROR(1001, "com.hostfully.webservice.param.mandatory.error"),
+    ILLEGAL_PARAMETER_VALUE_ERROR(1002,"com.hostfully.webservice.illegal.param.value.error"),
+
+    PROPERTY_NOT_FOUND(1003,"com.hostfully.webservice.property.not.found.error"),
+    GUEST_NOT_FOUND(1004,"com.hostfully.webservice.guest.not.found.error"),
+
+    BOOKING_NOT_FOUND(1005,"com.hostfully.webservice.booking.not.found.error"),
+
+    BLOCK_NOT_FOUND(1006,"com.hostfully.webservice.block.not.found.error");
 
 
     private final int code;
