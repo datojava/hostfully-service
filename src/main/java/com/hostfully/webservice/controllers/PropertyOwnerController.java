@@ -20,8 +20,8 @@ public class PropertyOwnerController {
 
     @Monitor
     @GetMapping("property-owner/list-owners")
-    public PropertyOwnerResponse listOwners(@RequestParam("email") String email) throws Exception {
-        return propertyService.listOwners(email);
+    public PropertyOwnerResponse listOwners() throws Exception {
+        return propertyService.listOwners();
     }
 
 }

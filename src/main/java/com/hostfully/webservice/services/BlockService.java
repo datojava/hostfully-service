@@ -7,10 +7,12 @@ import com.hostfully.webservice.exceptions.HostfullyWSException;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.blocks.BlockInfo;
 import com.hostfully.webservice.repositories.BlockRepository;
+import com.hostfully.webservice.repositories.BookingRepository;
 import com.hostfully.webservice.repositories.PropertyRepository;
 import com.hostfully.webservice.utils.CommonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeParseException;
@@ -24,11 +26,16 @@ public class BlockService {
     private final BlockRepository blockRepository;
 
     private final PropertyRepository propertyRepository;
+    private final BookingRepository bookingRepository;
 
+
+    @Autowired
     public BlockService(final BlockRepository blockRepository,
-                        final PropertyRepository propertyRepository) {
+                        final PropertyRepository propertyRepository,
+                        BookingRepository bookingRepository) {
         this.blockRepository = blockRepository;
         this.propertyRepository = propertyRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     public HostfullyResponse createBlock(BlockInfo blockInfo) throws HostfullyWSException {
@@ -53,6 +60,14 @@ public class BlockService {
         }
 
         block.setProperty(selectedProp.get());
+
+        if (bookingRepository.bookingExistsInTimeRange(block.getProperty().getId(), block.getStartDate(), block.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
+        }
+
+        if (blockRepository.propertyBlockedInTimeRange(block.getProperty().getId(), block.getStartDate(), block.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
+        }
 
         log.info("Property Name: {}", block.getProperty().getName());
         log.info("Start Date:    {}", blockInfo.getStartDate());
@@ -102,6 +117,14 @@ public class BlockService {
         }
 
         existingBlock.setProperty(selectedProp.get());
+
+        if (bookingRepository.bookingExistsInTimeRange(existingBlock.getProperty().getId(), existingBlock.getStartDate(), existingBlock.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
+        }
+
+        if (blockRepository.propertyBlockedInTimeRange(existingBlock.getProperty().getId(), existingBlock.getStartDate(), existingBlock.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
+        }
 
         log.info("Property Name: {}", existingBlock.getProperty().getName());
         log.info("Start Date:    {}", blockInfo.getStartDate());

@@ -17,7 +17,11 @@ public enum ErrorType {
 
     BOOKING_NOT_FOUND(1005,"com.hostfully.webservice.booking.not.found.error"),
 
-    BLOCK_NOT_FOUND(1006,"com.hostfully.webservice.block.not.found.error");
+    BLOCK_NOT_FOUND(1006,"com.hostfully.webservice.block.not.found.error"),
+    DATA_NOT_FOUND(1007,"com.hostfully.webservice.data.not.found.error"),
+    PROPERTY_ALREADY_BOOKED(1008,"com.hostfully.webservice.property.already.booked.error"),
+
+    PROPERTY_BLOCKED(1009,"com.hostfully.webservice.property.blocked.error");
 
 
     private final int code;

@@ -9,6 +9,8 @@ import com.hostfully.webservice.exceptions.HostfullyWSException;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.bookings.BookingInfo;
 import com.hostfully.webservice.models.bookings.BookingResponse;
+import com.hostfully.webservice.models.bookings.CreateBookingResponse;
+import com.hostfully.webservice.repositories.BlockRepository;
 import com.hostfully.webservice.repositories.BookingRepository;
 import com.hostfully.webservice.repositories.GuestRepository;
 import com.hostfully.webservice.repositories.PropertyRepository;
@@ -35,16 +37,20 @@ public class BookingService {
 
     private final GuestRepository guestRepository;
 
+    private final BlockRepository blockRepository;
+
     @Autowired
     public BookingService(final BookingRepository bookingRepository,
                           final PropertyRepository propertyRepository,
-                          final GuestRepository guestRepository) {
+                          final GuestRepository guestRepository,
+                          final BlockRepository blockRepository) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
         this.guestRepository = guestRepository;
+        this.blockRepository = blockRepository;
     }
 
-    public HostfullyResponse createBooking(BookingInfo bookingInfo) throws HostfullyWSException {
+    public CreateBookingResponse createBooking(BookingInfo bookingInfo) throws HostfullyWSException {
 
         log.info("Creating booking...");
 
@@ -74,16 +80,26 @@ public class BookingService {
         booking.setProperty(selectedProp.get());
         booking.setGuest(selectedGuest.get());
 
+        if (bookingRepository.bookingExistsInTimeRange(booking.getProperty().getId(), booking.getStartDate(), booking.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
+        }
+
+        if (blockRepository.propertyBlockedInTimeRange(booking.getProperty().getId(), booking.getStartDate(), booking.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
+        }
+
         log.info("Property Name: {}", booking.getProperty().getName());
         log.info("Guest:         {}", booking.getGuest().getFullName());
         log.info("Start Date:    {}", bookingInfo.getStartDate());
         log.info("End Date:      {}", bookingInfo.getEndDate());
 
-        bookingRepository.save(booking);
+        CreateBookingResponse response = new CreateBookingResponse();
 
-        log.info("Booking completed");
+        response.setId(bookingRepository.save(booking).getId());
 
-        return new HostfullyResponse();
+        log.info("Booking created");
+
+        return response;
 
     }
 
@@ -126,6 +142,14 @@ public class BookingService {
 
         selectedBooking.setGuest(selectedGuest.get());
         selectedBooking.setProperty(selectedProp.get());
+
+        if (bookingRepository.bookingExistsInTimeRange(selectedBooking.getProperty().getId(), selectedBooking.getStartDate(), selectedBooking.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
+        }
+
+        if (blockRepository.propertyBlockedInTimeRange(selectedBooking.getProperty().getId(), selectedBooking.getStartDate(), selectedBooking.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
+        }
 
         log.info("Property Name: {}", selectedBooking.getProperty().getName());
         log.info("Guest:         {}", selectedBooking.getGuest().getFullName());

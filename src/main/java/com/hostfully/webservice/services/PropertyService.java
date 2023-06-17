@@ -1,66 +1,94 @@
 package com.hostfully.webservice.services;
 
 import com.hostfully.webservice.constants.ErrorType;
+import com.hostfully.webservice.entities.Property;
+import com.hostfully.webservice.entities.PropertyOwner;
 import com.hostfully.webservice.exceptions.HostfullyWSException;
-import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.properties.PropertyInfo;
 import com.hostfully.webservice.models.properties.PropertyOwnerInfo;
 import com.hostfully.webservice.models.properties.PropertyOwnerResponse;
 import com.hostfully.webservice.models.properties.PropertyResponse;
-import com.hostfully.webservice.utils.CommonUtils;
+import com.hostfully.webservice.repositories.PropertyOwnerRepository;
+import com.hostfully.webservice.repositories.PropertyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class PropertyService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    public HostfullyResponse createOwner(PropertyOwnerInfo ownerInfo) throws HostfullyWSException {
-        log.info("Trying to create property owner");
+    private final PropertyOwnerRepository propertyOwnerRepository;
 
-        if (ownerInfo == null) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"ownerInfo"});
-        }
+    private final PropertyRepository propertyRepository;
 
-        if (CommonUtils.isNullOrEmpty(ownerInfo.getEmail())) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"email"});
-        }
-
-        if (CommonUtils.isNullOrEmpty(ownerInfo.getFirstName())) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"firstName"});
-        }
-
-        if (CommonUtils.isNullOrEmpty(ownerInfo.getLastName())) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"lastName"});
-        }
-
-        return new HostfullyResponse();
+    @Autowired
+    public PropertyService(final PropertyOwnerRepository propertyOwnerRepository, final PropertyRepository propertyRepository) {
+        this.propertyRepository = propertyRepository;
+        this.propertyOwnerRepository = propertyOwnerRepository;
     }
 
-    public PropertyOwnerResponse listOwners(String email) throws HostfullyWSException {
+    public PropertyOwnerResponse listOwners() throws HostfullyWSException {
+        log.info("Getting the list of all owners");
 
-        if (CommonUtils.isNullOrEmpty(email)) {
+        PropertyOwnerResponse ownerResponse = new PropertyOwnerResponse();
+        ownerResponse.setOwners(new ArrayList<>());
 
-            log.info("Getting the list of all owners");
+        List<PropertyOwner> owners = propertyOwnerRepository.findAll();
 
-        } else {
+        if (owners.isEmpty()) {
+            throw new HostfullyWSException(ErrorType.DATA_NOT_FOUND);
+        }
 
-            log.info("Getting the list of owners by email: {}", email);
+        PropertyOwnerInfo ownerInfo;
+
+        for (PropertyOwner propertyOwner : owners) {
+
+            ownerInfo = new PropertyOwnerInfo();
+
+            ownerInfo.setId(propertyOwner.getId());
+            ownerInfo.setEmail(propertyOwner.getEmail());
+            ownerInfo.setFirstName(propertyOwner.getFirstName());
+            ownerInfo.setLastName(propertyOwner.getLastName());
+
+            ownerResponse.getOwners().add(ownerInfo);
 
         }
 
-        return new PropertyOwnerResponse();
+        return ownerResponse;
     }
 
-    public HostfullyResponse createProperty(PropertyInfo propertyInfo) {
+    public PropertyResponse listProperties() throws HostfullyWSException {
 
-        return new HostfullyResponse();
-    }
+        log.info("Listing all properties");
 
-    public PropertyResponse listProperties() {
+        PropertyResponse response = new PropertyResponse();
+        response.setProperties(new ArrayList<>());
 
-        return new PropertyResponse();
+        List<Property> properties = propertyRepository.findAll();
+
+        if (properties.isEmpty()) {
+            throw new HostfullyWSException(ErrorType.DATA_NOT_FOUND);
+        }
+
+        PropertyInfo propInfo;
+
+        for (Property prop : properties) {
+
+            propInfo = new PropertyInfo();
+
+            propInfo.setId(prop.getId());
+            propInfo.setAddress(prop.getAddress());
+            propInfo.setName(prop.getName());
+
+            response.getProperties().add(propInfo);
+        }
+
+        return response;
     }
 }
