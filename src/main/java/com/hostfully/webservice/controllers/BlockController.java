@@ -3,6 +3,7 @@ package com.hostfully.webservice.controllers;
 import com.hostfully.webservice.annotations.Monitor;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.blocks.BlockInfo;
+import com.hostfully.webservice.models.blocks.CreateUpdateBlockResponse;
 import com.hostfully.webservice.services.BlockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,20 +19,19 @@ public class BlockController {
     }
 
 
-
     @Monitor
     @PostMapping("block/create")
-    public HostfullyResponse create(@RequestBody BlockInfo blockInfo) throws Exception {
+    public CreateUpdateBlockResponse create(@RequestBody BlockInfo blockInfo) throws Exception {
 
-        return blockService.createBlock(blockInfo);
+        return blockService.createOrUpdateBlock(blockInfo);
 
     }
 
     @Monitor
     @PutMapping("block/update")
-    public HostfullyResponse update(@RequestBody BlockInfo blockInfo) throws Exception {
+    public CreateUpdateBlockResponse update(@RequestBody BlockInfo blockInfo) throws Exception {
 
-        return blockService.updateBlock(blockInfo);
+        return blockService.createOrUpdateBlock(blockInfo);
 
     }
 

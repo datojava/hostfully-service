@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Repository
 public interface BlockRepository extends JpaRepository<Block,Long> {
 
-    @Query("SELECT count(b.id)>0 FROM Block b WHERE b.property.id=:propertyId AND b.startDate>=:startDate AND b.endDate<=:endDate")
+    @Query("SELECT count(b.id)>0 FROM Block b WHERE b.property.id=:propertyId AND b.startDate<=:startDate AND b.endDate>=:endDate")
     boolean propertyBlockedInTimeRange(long propertyId, LocalDate startDate, LocalDate endDate);
 
 }

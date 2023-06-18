@@ -4,7 +4,7 @@ import com.hostfully.webservice.annotations.Monitor;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.bookings.BookingInfo;
 import com.hostfully.webservice.models.bookings.BookingResponse;
-import com.hostfully.webservice.models.bookings.CreateBookingResponse;
+import com.hostfully.webservice.models.bookings.CreateUpdateBookingResponse;
 import com.hostfully.webservice.services.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +21,9 @@ public class BookingController {
 
     @Monitor
     @PostMapping("booking/create")
-    public CreateBookingResponse create(@RequestBody BookingInfo bookingInfo) throws Exception {
+    public CreateUpdateBookingResponse create(@RequestBody BookingInfo bookingInfo) throws Exception {
 
-        return bookingService.createBooking(bookingInfo);
+        return bookingService.createOrUpdate(bookingInfo);
 
     }
 
@@ -47,7 +47,7 @@ public class BookingController {
     @PutMapping("booking/update")
     public HostfullyResponse update(@RequestBody BookingInfo bookingInfo) throws Exception {
 
-        return bookingService.updateBooking(bookingInfo);
+        return bookingService.createOrUpdate(bookingInfo);
 
     }
 

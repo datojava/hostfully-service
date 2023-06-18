@@ -17,7 +17,7 @@ public interface HostfullyConstants {
 
     DecimalFormat DEFAULT_NUMBER_FORMAT = new DecimalFormat("#.##");
 
-    String DEFAULT_DATE_PATTERN="MM/dd/yyyy";
+    String DEFAULT_DATE_PATTERN="yyyy-MM-dd";
 
     DateTimeFormatter DEFAULT_DATE_FORMAT = DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN);
 

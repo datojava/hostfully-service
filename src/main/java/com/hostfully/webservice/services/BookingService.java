@@ -9,7 +9,7 @@ import com.hostfully.webservice.exceptions.HostfullyWSException;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.bookings.BookingInfo;
 import com.hostfully.webservice.models.bookings.BookingResponse;
-import com.hostfully.webservice.models.bookings.CreateBookingResponse;
+import com.hostfully.webservice.models.bookings.CreateUpdateBookingResponse;
 import com.hostfully.webservice.repositories.BlockRepository;
 import com.hostfully.webservice.repositories.BookingRepository;
 import com.hostfully.webservice.repositories.GuestRepository;
@@ -50,11 +50,41 @@ public class BookingService {
         this.blockRepository = blockRepository;
     }
 
-    public CreateBookingResponse createBooking(BookingInfo bookingInfo) throws HostfullyWSException {
-
-        log.info("Creating booking...");
+    public CreateUpdateBookingResponse createOrUpdate(BookingInfo bookingInfo) throws HostfullyWSException {
 
         validateBooking(bookingInfo);
+
+        Booking booking;
+
+        if (bookingInfo.getId() == null) {
+
+            log.info("Creating booking...");
+
+            booking = new Booking();
+
+        } else {
+
+            log.info("Updating booking");
+
+            Optional<Booking> selectedBookingOpt = bookingRepository.findById(bookingInfo.getId());
+
+            if (selectedBookingOpt.isEmpty()) {
+                throw new HostfullyWSException(ErrorType.BOOKING_NOT_FOUND, new Object[]{bookingInfo.getId()});
+            }
+
+            booking = selectedBookingOpt.get();
+        }
+
+        try {
+            booking.setStartDate(CommonUtils.toDate(bookingInfo.getStartDate()));
+            booking.setEndDate(CommonUtils.toDate(bookingInfo.getEndDate()));
+        } catch (DateTimeParseException e) {
+            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
+        }
+
+        if (booking.getStartDate().isEqual(booking.getEndDate()) || booking.getStartDate().isAfter(booking.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
+        }
 
         Optional<Property> selectedProp = propertyRepository.findById(bookingInfo.getPropertyId());
 
@@ -68,21 +98,19 @@ public class BookingService {
             throw new HostfullyWSException(ErrorType.GUEST_NOT_FOUND, new Object[]{bookingInfo.getGuestId()});
         }
 
-        Booking booking = new Booking();
-
-        try {
-            booking.setStartDate(CommonUtils.toDate(bookingInfo.getStartDate()));
-            booking.setEndDate(CommonUtils.toDate(bookingInfo.getEndDate()));
-        } catch (DateTimeParseException e) {
-            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
-        }
-
         booking.setProperty(selectedProp.get());
         booking.setGuest(selectedGuest.get());
+
+        LocalDate latestBookingEndsAt = bookingRepository.bookingInTimeRange(booking.getProperty().getId());
+
+        if (latestBookingEndsAt != null) {
+            booking.setStartDate(latestBookingEndsAt.plusDays(1));
+        }
 
         if (bookingRepository.bookingExistsInTimeRange(booking.getProperty().getId(), booking.getStartDate(), booking.getEndDate())) {
             throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
         }
+
 
         if (blockRepository.propertyBlockedInTimeRange(booking.getProperty().getId(), booking.getStartDate(), booking.getEndDate())) {
             throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
@@ -93,72 +121,13 @@ public class BookingService {
         log.info("Start Date:    {}", bookingInfo.getStartDate());
         log.info("End Date:      {}", bookingInfo.getEndDate());
 
-        CreateBookingResponse response = new CreateBookingResponse();
+        CreateUpdateBookingResponse response = new CreateUpdateBookingResponse();
 
         response.setId(bookingRepository.save(booking).getId());
 
-        log.info("Booking created");
+        log.info("Booking process completed");
 
         return response;
-
-    }
-
-    public HostfullyResponse updateBooking(BookingInfo bookingInfo) throws HostfullyWSException {
-
-        log.info("Updating booking");
-
-        validateBooking(bookingInfo);
-
-        if (bookingInfo.getId() == null) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"id"});
-        }
-
-        Optional<Booking> selectedBookingOpt = bookingRepository.findById(bookingInfo.getId());
-
-        if (selectedBookingOpt.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.BOOKING_NOT_FOUND, new Object[]{bookingInfo.getId()});
-        }
-
-        Optional<Property> selectedProp = propertyRepository.findById(bookingInfo.getPropertyId());
-
-        if (selectedProp.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_NOT_FOUND, new Object[]{bookingInfo.getPropertyId()});
-        }
-
-        Optional<Guest> selectedGuest = guestRepository.findById(bookingInfo.getGuestId());
-
-        if (selectedGuest.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.GUEST_NOT_FOUND, new Object[]{bookingInfo.getGuestId()});
-        }
-
-        Booking selectedBooking = selectedBookingOpt.get();
-
-        try {
-            selectedBooking.setStartDate(CommonUtils.toDate(bookingInfo.getStartDate()));
-            selectedBooking.setEndDate(CommonUtils.toDate(bookingInfo.getEndDate()));
-        } catch (DateTimeParseException e) {
-            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
-        }
-
-        selectedBooking.setGuest(selectedGuest.get());
-        selectedBooking.setProperty(selectedProp.get());
-
-        if (bookingRepository.bookingExistsInTimeRange(selectedBooking.getProperty().getId(), selectedBooking.getStartDate(), selectedBooking.getEndDate())) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
-        }
-
-        if (blockRepository.propertyBlockedInTimeRange(selectedBooking.getProperty().getId(), selectedBooking.getStartDate(), selectedBooking.getEndDate())) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
-        }
-
-        log.info("Property Name: {}", selectedBooking.getProperty().getName());
-        log.info("Guest:         {}", selectedBooking.getGuest().getFullName());
-        log.info("Start Date:    {}", bookingInfo.getStartDate());
-        log.info("End Date:      {}", bookingInfo.getEndDate());
-
-        bookingRepository.save(selectedBooking);
-
-        return new HostfullyResponse();
     }
 
 
@@ -202,8 +171,6 @@ public class BookingService {
             throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"endDate"});
         }
 
-        log.info("Looking up booking(s) by time range: {} - {}", startDateValue, endDateValue);
-
         LocalDate startDate;
         LocalDate endDate;
         try {
@@ -212,6 +179,12 @@ public class BookingService {
         } catch (DateTimeParseException e) {
             throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
         }
+
+        if (startDate.isEqual(endDate) || startDate.isAfter(endDate)) {
+            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
+        }
+
+        log.info("Looking up booking(s) by time range: {} - {}", startDateValue, endDateValue);
 
         BookingResponse response = new BookingResponse();
 

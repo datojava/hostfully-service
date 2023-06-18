@@ -6,6 +6,7 @@ import com.hostfully.webservice.entities.Property;
 import com.hostfully.webservice.exceptions.HostfullyWSException;
 import com.hostfully.webservice.models.HostfullyResponse;
 import com.hostfully.webservice.models.blocks.BlockInfo;
+import com.hostfully.webservice.models.blocks.CreateUpdateBlockResponse;
 import com.hostfully.webservice.repositories.BlockRepository;
 import com.hostfully.webservice.repositories.BookingRepository;
 import com.hostfully.webservice.repositories.PropertyRepository;
@@ -38,25 +39,49 @@ public class BlockService {
         this.bookingRepository = bookingRepository;
     }
 
-    public HostfullyResponse createBlock(BlockInfo blockInfo) throws HostfullyWSException {
-
-        log.info("Creating block...");
-
+    public CreateUpdateBlockResponse createOrUpdateBlock(BlockInfo blockInfo) throws HostfullyWSException {
         validateBlock(blockInfo);
 
-        Optional<Property> selectedProp = propertyRepository.findById(blockInfo.getPropertyId());
+        Block block;
 
-        if (selectedProp.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_NOT_FOUND, new Object[]{blockInfo.getPropertyId()});
+        if (blockInfo.getId() == null) {
+
+            log.info("Creating block...");
+
+            block = new Block();
+
+        } else {
+
+            log.info("Updating block...");
+
+            Optional<Block> selectedBlockOpt = blockRepository.findById(blockInfo.getId());
+
+            if (selectedBlockOpt.isEmpty()) {
+                throw new HostfullyWSException(ErrorType.BLOCK_NOT_FOUND, new Object[]{blockInfo.getId()});
+            }
+
+            block = selectedBlockOpt.get();
         }
 
-        Block block = new Block();
+        if (blockInfo.getPropertyId() == null) {
+            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"propertyId"});
+        }
 
         try {
             block.setStartDate(CommonUtils.toDate(blockInfo.getStartDate()));
             block.setEndDate(CommonUtils.toDate(blockInfo.getEndDate()));
         } catch (DateTimeParseException e) {
             throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
+        }
+
+        if (block.getStartDate().isEqual(block.getEndDate()) || block.getStartDate().isAfter(block.getEndDate())) {
+            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
+        }
+
+        Optional<Property> selectedProp = propertyRepository.findById(blockInfo.getPropertyId());
+
+        if (selectedProp.isEmpty()) {
+            throw new HostfullyWSException(ErrorType.PROPERTY_NOT_FOUND, new Object[]{blockInfo.getPropertyId()});
         }
 
         block.setProperty(selectedProp.get());
@@ -73,69 +98,11 @@ public class BlockService {
         log.info("Start Date:    {}", blockInfo.getStartDate());
         log.info("End Date:      {}", blockInfo.getEndDate());
 
-        blockRepository.save(block);
+        CreateUpdateBlockResponse response = new CreateUpdateBlockResponse();
 
-        log.info("Block created");
+        response.setId(blockRepository.save(block).getId());
 
-        return new HostfullyResponse();
-    }
-
-    public HostfullyResponse updateBlock(BlockInfo blockInfo) throws HostfullyWSException {
-
-        log.info("Updating block...");
-
-        validateBlock(blockInfo);
-
-        if (blockInfo.getId() == null) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"id"});
-        }
-
-        if (blockInfo.getPropertyId() == null) {
-            throw new HostfullyWSException(ErrorType.PARAMETER_MANDATORY_ERROR, new Object[]{"propertyId"});
-        }
-
-        Optional<Block> selectedBlockOpt = blockRepository.findById(blockInfo.getId());
-
-        if (selectedBlockOpt.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.BLOCK_NOT_FOUND, new Object[]{blockInfo.getId()});
-        }
-
-        Optional<Property> selectedProp = propertyRepository.findById(blockInfo.getPropertyId());
-
-        if (selectedProp.isEmpty()) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_NOT_FOUND, new Object[]{blockInfo.getPropertyId()});
-        }
-
-
-        Block existingBlock = selectedBlockOpt.get();
-
-        try {
-            existingBlock.setStartDate(CommonUtils.toDate(blockInfo.getStartDate()));
-            existingBlock.setEndDate(CommonUtils.toDate(blockInfo.getEndDate()));
-        } catch (DateTimeParseException e) {
-            throw new HostfullyWSException(ErrorType.ILLEGAL_PARAMETER_VALUE_ERROR, new Object[]{"startDate or endDate"});
-        }
-
-        existingBlock.setProperty(selectedProp.get());
-
-        if (bookingRepository.bookingExistsInTimeRange(existingBlock.getProperty().getId(), existingBlock.getStartDate(), existingBlock.getEndDate())) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_ALREADY_BOOKED);
-        }
-
-        if (blockRepository.propertyBlockedInTimeRange(existingBlock.getProperty().getId(), existingBlock.getStartDate(), existingBlock.getEndDate())) {
-            throw new HostfullyWSException(ErrorType.PROPERTY_BLOCKED);
-        }
-
-        log.info("Property Name: {}", existingBlock.getProperty().getName());
-        log.info("Start Date:    {}", blockInfo.getStartDate());
-        log.info("End Date:      {}", blockInfo.getEndDate());
-
-        blockRepository.save(existingBlock);
-
-        log.info("Block updated");
-
-        return new HostfullyResponse();
-
+        return response;
     }
 
     private void validateBlock(BlockInfo blockInfo) throws HostfullyWSException {

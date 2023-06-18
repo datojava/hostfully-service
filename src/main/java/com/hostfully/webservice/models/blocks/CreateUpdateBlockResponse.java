@@ -1,8 +1,8 @@
-package com.hostfully.webservice.models.bookings;
+package com.hostfully.webservice.models.blocks;
 
 import com.hostfully.webservice.models.HostfullyResponse;
 
-public class CreateBookingResponse extends HostfullyResponse {
+public class CreateUpdateBlockResponse extends HostfullyResponse {
 
     private Long id;
 
